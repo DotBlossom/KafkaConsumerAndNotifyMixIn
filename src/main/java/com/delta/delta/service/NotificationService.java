@@ -7,4 +7,5 @@ public interface NotificationService {
     void consumeObject(NotificationsDto dto);
     SseEmitter subscribe(String userId, String lastEventId);
     void sendToClient(SseEmitter emitter, String emitterId, Object data);
+
 }

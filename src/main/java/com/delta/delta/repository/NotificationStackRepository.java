@@ -5,4 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface NotificationStackRepository extends JpaRepository<NotificationStack, Long> {
     NotificationStack findByOwnerId(Long ownerId);
+
 }

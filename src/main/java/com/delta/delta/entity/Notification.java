@@ -2,6 +2,8 @@ package com.delta.delta.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.DynamicUpdate;
+
 
 import java.time.LocalDateTime;
 
@@ -11,6 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@DynamicUpdate
 public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,6 +28,7 @@ public class Notification {
     private String eventType;
 
     private LocalDateTime eventCreatedTime;
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "notification_stack")

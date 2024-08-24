@@ -25,10 +25,11 @@ public class NotificationStack {
     private Long ownerId;
 
     @Column(nullable = false)
-    @ColumnDefault("0")
     private int stackLength;
 
-    @OneToMany(mappedBy = "notificationStack", cascade = CascadeType.ALL, orphanRemoval = true)
+
+
+    @OneToMany(mappedBy = "notificationStack", orphanRemoval = true)
     @JsonIgnoreProperties("notificationStack")
     private List<Notification> notifications = new ArrayList<>();
 
