@@ -15,7 +15,7 @@ public class NotificationsDto {
     private Long senderId;
     private Long receiverId;
 
-    private int postId;
+    private Long postId;
 
     private Boolean isRead;
 

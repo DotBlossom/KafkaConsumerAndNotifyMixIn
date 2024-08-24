@@ -7,6 +7,7 @@ import com.delta.delta.repository.EmitterRepository;
 
 import com.delta.delta.repository.NotificationRepository;
 import com.delta.delta.repository.NotificationStackRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 
 import org.slf4j.Logger;
@@ -14,11 +15,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,10 +36,11 @@ public class NotificationServiceImpl implements NotificationService {
 
     private static final long DEFAULT_TIMEOUT = 60L * 1000 * 60;
     private static final int MAX_NOTIFICATIONS_COUNT = 10;
-
+    private final EntityManager em;
     Logger log = LoggerFactory.getLogger(NotificationServiceImpl.class);
 
     @KafkaListener(topics = "${notifications.topic-name}", groupId = "${notifications.group-id}")
+    @Transactional
     public void consumeObject(NotificationsDto dto) {
         Long receiverId = dto.getReceiverId();
         String emitterReceiverId = receiverId.toString();
@@ -46,45 +50,47 @@ public class NotificationServiceImpl implements NotificationService {
                 .receiverId(dto.getReceiverId())
                 .eventCreatedTime(LocalDateTime.now())
                 .eventType(dto.getEventType())
+                .postId(dto.getPostId())
                 .build();
-
-
-
+        Notification pNotification = notificationRepository.save(notification);
 
         NotificationStack stack = notificationStackRepository.findByOwnerId(receiverId);
-        // 잘못된 코드
-        if (stack != null) {
-            if (stack.getStackLength() >= MAX_NOTIFICATIONS_COUNT) {
-                stack.getNotifications().remove(MAX_NOTIFICATIONS_COUNT - 1);
 
-                // query호출..
+        if (stack != null) {
+            int len = stack.getStackLength();
+
+
+
+            if (len >= MAX_NOTIFICATIONS_COUNT) {
+                Notification target = stack.getNotifications().get(0);
+                notificationRepository.deleteById(target.getId());
+                stack.setStackLength(len - 1);
             }
 
 
 
-            notification.setNotificationStack(stack);
-            notificationRepository.save(notification);
-
+            stack.setStackLength(len + 1);
+            pNotification.setNotificationStack(notificationStackRepository.save(stack));
 
 
         } else {
 
-
+            log.info("logged {} ", notification.getId());
             NotificationStack newStack = NotificationStack.builder()
                     .ownerId(dto.getReceiverId())
+                    .stackLength(1)
+
                     .build();
 
             List<Notification> LN = new ArrayList<>();
             LN.add(notification);
-
-
             newStack.setNotifications(LN);
-            notification.setNotificationStack(newStack);
-            notificationStackRepository.save(newStack);
+
+            pNotification.setNotificationStack(notificationStackRepository.save(newStack));
 
         }
-
-        // cnt ++ -> notificationStckRepoSave.
+        // update,, query낭비..? dynamicUpdateAnnotaion
+        em.flush();
 
 
         // emitter가 여려개 연결된 경우? notifi 말고 확장 or 페이지 여려개
@@ -93,15 +99,16 @@ public class NotificationServiceImpl implements NotificationService {
         if (!sseEmitters.isEmpty()) {
             sseEmitters.forEach(
                     (key, emitter) -> {
-                        emitterRepository.saveEventCache(key, notification);
-                        sendToClient(emitter, key, notification);
+                        emitterRepository.saveEventCache(key, pNotification);
+                        sendToClient(emitter, key, pNotification);
                     }
             );
 
         } else {
             //logout push
-            emitterRepository.saveEventCache(emitterReceiverId, notification);
+            emitterRepository.saveEventCache(emitterReceiverId, pNotification);
         }
+
     }
 
 
