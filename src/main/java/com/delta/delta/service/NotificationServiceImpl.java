@@ -153,6 +153,9 @@ public class NotificationServiceImpl implements NotificationService {
         return emitter;
     }
 
+    public void deleteIsReadNotification(Long id) {
+        // if front emit trigger -> deleteById run
+    }
     @Scheduled(fixedRate = 60 * 1000 * 5) //heartbeat 메세지 전달.
     public void sendHeartbeat() {
         Map<String, SseEmitter> sseEmitters = emitterRepository.findAllEmitters();
