@@ -19,8 +19,8 @@ public class NotificationsDto {
 
     private Long postId;
 
-    private Boolean isRead;
-
+    private String isRead;
+    private String isSent;
 }
 
 // Actions : follow , postLike(To postRedirect, commentRedirectInPost)
