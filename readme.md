@@ -5,42 +5,47 @@ max-notifiaction 개수?
 login - jwt read.
 
 
-    useEffect(()=> {
-        const eventSource = new EventSource("http://${ElasticIP}/notifications/${userId}")
+import { useEffect } from 'react'
+import { EventSourcePolyfill } from 'event-source-polyfill';
+export default function Notification() {
     
+    useEffect(() => {
+        const userId = 2; 
+        const savedLastEventId = localStorage.getItem('lastEventId');
+        const eventSource = new EventSourcePolyfill(
+            `http://localhost:9292/api/kafkaListener/subscribe/${userId}`,
+            {
+              headers: {
+                'Last-Event-ID': savedLastEventId // 저장된 lastEventId 값 사용
+              }
+            })
+        
+            
         eventSource.onopen = async () => {
-          await console.log("sse opened!")
+            await console.log("sse opened!")
         }
-    
-        eventSource.addEventListener('type1', (event) => {
-          console.log("type1")
-          const data = JSON.parse(event.data);
-          console.log(data)
-        });
-        
-        eventSource.addEventListener('type2', (event) => {
-          console.log("type2")
-          const data = JSON.parse(event.data);
-          console.log(data)
-        });
-        
-        eventSource.addEventListener('type3', (event) => {
-          console.log("type3")
-          const data = JSON.parse(event.data);
-          console.log(data)
-        });
-    
-        eventSource.onerror = async (e) => {
-          await console.log(e)
-        }
-        
-        // if notification component is unmounted
+        eventSource.addEventListener("notification", (e) =>
+            {
+                const data = JSON.parse(e.data);
+                console.log(data);
+                console.log(e.lastEventId);
+                
+                localStorage.setItem('lastEventId', e.lastEventId);
+                
+            }
+        )
+        eventSource.onerror
+        // if unmounted. -> 조건부렌더out, page아웃
         return () => {
-          eventSource.close()
+            
+            eventSource.close()
         }
+
+
     },[])
     
+    
     return (
-        render...
-        notifications.map(n, i) ...
+        <div>Notification</div>
     )
+}
