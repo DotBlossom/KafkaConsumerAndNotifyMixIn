@@ -72,6 +72,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .eventCreatedTime(LocalDateTime.now())
                 .eventType(dto.getEventType())
                 .postId(dto.getPostId())
+                .isSent("N")
                 .build();
         Notification pNotification = notificationRepository.save(notification);
 
@@ -102,7 +103,6 @@ public class NotificationServiceImpl implements NotificationService {
             NotificationStack newStack = NotificationStack.builder()
                     .ownerId(dto.getReceiverId())
                     .stackLength(1)
-
                     .build();
 
             List<Notification> LN = new ArrayList<>();
@@ -138,9 +138,21 @@ public class NotificationServiceImpl implements NotificationService {
 
     public void sendToClient(SseEmitter emitter, String emitterId, Object data) {
         try {
-            emitter.send(SseEmitter.event()
-                    .id(emitterId)
-                    .data(data));
+
+            if (data.equals("connected!")) {
+                emitter.send(SseEmitter.event()
+                        .id(emitterId)
+                        .data(data)
+                );
+
+            } else {
+                emitter.send(SseEmitter.event()
+                        .id(emitterId)
+                        .name("notification")
+                        .data(data)
+                );
+            }
+
             log.info("Kafka로 부터 전달 받은 메세지 전송. emitterId : {}, message : {}", emitterId, data);
         } catch (IOException e) {
             emitterRepository.deleteById(emitterId);
@@ -172,7 +184,12 @@ public class NotificationServiceImpl implements NotificationService {
             List<Notification> sentNotifications = stack.getNotifications();
 
             sentNotifications.stream()
-                            .filter(notification -> notification.getIsSent().equals("Y"))
+                            .filter(notification -> {
+                                if(notification.getIsSent() == null) {
+                                    notification.setIsSent("N");
+                                }
+                                return notification.getIsSent().equals("Y");
+                            })
                             .forEach(filteredNotification -> sendToClient(emitter, emitterId, filteredNotification));
 
             events.entrySet().stream()
