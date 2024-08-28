@@ -12,12 +12,7 @@ public class KafkaMessageListenerService {
     Logger log = LoggerFactory.getLogger(KafkaMessageListenerService.class);
 
 
-    @KafkaListener(topics = "${notifications.topic-name}", groupId = "${notifications.group-id-1}")
-    public void consumeObject(NotificationsDto notificationsDto) {
-        //get info msg
 
-        log.info("logged {} ", notificationsDto.toString());
-    }
 
     //@KafkaListener(topics = "${notifications.topic-name}", groupId = "${notifications.group-id-2}",
     //    filter = "headers['eventType-header'] == 'D'")

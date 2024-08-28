@@ -27,6 +27,7 @@ public class DataAggToPreferenceRepositoryImpl implements DataAggToPreferenceRep
         prefer = new PreferenceDataDto();
         prefer.setPostIdToPrefer(new ArrayList<>(top20.keySet()));
         prefer.setEventType("prefer");
+        hashMap.clear();
 
         return true;
 

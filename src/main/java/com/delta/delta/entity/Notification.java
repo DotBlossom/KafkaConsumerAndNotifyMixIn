@@ -29,6 +29,8 @@ public class Notification {
 
     private LocalDateTime eventCreatedTime;
 
+    private String isSent;
+    private String isRead;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "notification_stack")

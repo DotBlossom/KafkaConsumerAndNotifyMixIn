@@ -45,6 +45,27 @@ public class NotificationServiceImpl implements NotificationService {
         Long receiverId = dto.getReceiverId();
         String emitterReceiverId = receiverId.toString();
 
+        log.info("get aleat {}" , dto.toString());
+        if (dto.getEventType().equals("postUnlike")) {
+            return ;
+        }
+
+        if (dto.getIsRead() != null) {
+            if (dto.getIsRead().equals("Y")) {
+                NotificationStack stack = notificationStackRepository.findByOwnerId(receiverId);
+
+
+                List<Notification> targets = stack.getNotifications();
+                targets.stream()
+                        .filter(notification -> notification.getIsRead().equals("Y"))
+                        .forEach(filteredNotification -> notificationRepository.deleteById(filteredNotification.getId()));
+
+
+                return;
+            }
+        }
+
+
         Notification notification = Notification.builder()
                 .senderId(dto.getSenderId())
                 .receiverId(dto.getReceiverId())
@@ -55,6 +76,8 @@ public class NotificationServiceImpl implements NotificationService {
         Notification pNotification = notificationRepository.save(notification);
 
         NotificationStack stack = notificationStackRepository.findByOwnerId(receiverId);
+        // 여기서 delete 오면 삭제함.
+
 
         if (stack != null) {
             int len = stack.getStackLength();
@@ -101,6 +124,7 @@ public class NotificationServiceImpl implements NotificationService {
                     (key, emitter) -> {
                         emitterRepository.saveEventCache(key, pNotification);
                         sendToClient(emitter, key, pNotification);
+                        pNotification.setIsSent("Y");
                     }
             );
 
@@ -144,10 +168,22 @@ public class NotificationServiceImpl implements NotificationService {
         //send clinet 미수신 data -> 다시 보내주기.
         if (!lastEventId.isEmpty()) {
             Map<String, Object> events = emitterRepository.findAllEventCacheStartWithByReceiverId(userId);
+            NotificationStack stack =  notificationStackRepository.findByOwnerId(Long.valueOf(userId));
+            List<Notification> sentNotifications = stack.getNotifications();
+
+            sentNotifications.stream()
+                            .filter(notification -> notification.getIsSent().equals("Y"))
+                            .forEach(filteredNotification -> sendToClient(emitter, emitterId, filteredNotification));
+
             events.entrySet().stream()
                     .filter(entry -> lastEventId.compareTo(entry.getKey()) < 0)
                     .forEach(entry -> sendToClient(emitter, entry.getKey(), entry.getValue()));
+
+            sentNotifications
+                    .forEach(e -> e.setIsSent("Y"));
+
         }
+
 
 
         return emitter;
