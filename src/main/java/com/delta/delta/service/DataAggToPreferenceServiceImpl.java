@@ -39,7 +39,7 @@ public class DataAggToPreferenceServiceImpl implements DataAggToPreferenceServic
             unitTimePostPreferenceChecker.compute(dto.getPostId(), (key, oldValue) -> (oldValue == null) ? 1L : oldValue + 1L);
             log.info("logged DataAggs {} ", dto.toString());
         } else if (dto.getEventType().equals("postUnlike")) {
-            unitTimePostPreferenceChecker.compute(dto.getPostId(), (key, oldValue) -> (oldValue == null) ? 1L : oldValue - 1L);
+            unitTimePostPreferenceChecker.compute(dto.getPostId(), (key, oldValue) -> (oldValue == null) ? -1L : oldValue - 1L);
             log.info("logged unliked {} ", dto.toString());
         }
 
