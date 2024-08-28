@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public class EmitterRepositoryImpl implements EmitterRepository {
     private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
     private final Map<String, Object> eventCache = new ConcurrentHashMap<>();
-    private final Map<String, Object> logOutEventCache = new ConcurrentHashMap<>();
+    //private final Map<String, Object> logOutEventCache = new ConcurrentHashMap<>();
 
     @Override
     public SseEmitter save(String emitterId, SseEmitter sseEmitter) {
@@ -26,10 +26,7 @@ public class EmitterRepositoryImpl implements EmitterRepository {
         eventCache.put(eventCacheId, event);
     }
 
-    @Override
-    public void saveLogOutEventCache(String eventCacheId, Object event) {
-        logOutEventCache.put(eventCacheId, event);
-    }
+
 
     @Override
     public Map<String, SseEmitter> findAllEmitters() {
@@ -50,12 +47,6 @@ public class EmitterRepositoryImpl implements EmitterRepository {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    @Override
-    public Map<String, Object> findAllLogOutEventCacheStartWithByReceiverId(String receiverId) {
-        return logOutEventCache.entrySet().stream()
-                .filter(entry -> entry.getKey().startsWith(receiverId))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
 
     @Override
     public void deleteById(String id) {

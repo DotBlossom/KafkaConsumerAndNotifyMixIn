@@ -39,7 +39,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final EntityManager em;
     Logger log = LoggerFactory.getLogger(NotificationServiceImpl.class);
 
-    @KafkaListener(topics = "${notifications.topic-name}", groupId = "${notifications.group-id}")
+    @KafkaListener(topics = "${notifications.topic-name}", groupId = "${notifications.group-id-1}")
     @Transactional
     public void consumeObject(NotificationsDto dto) {
         Long receiverId = dto.getReceiverId();
